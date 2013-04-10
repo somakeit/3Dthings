@@ -1,6 +1,6 @@
 // Greg's Wade Extruder. 
 // It is licensed under the Creative Commons - GNU GPL license. 
-// © 2010 by GregFrost
+// Â© 2010 by GregFrost
 // Extruder based on prusa git repo.
 // http://www.thingiverse.com/thing:6713
 
@@ -293,17 +293,39 @@ module block_holes()
 			cube([wade_block_width,
 				wade_block_height-motor_mount_translation[1]+1,
 				wade_block_depth]);
-		
-			translate([0,0,-1])
+
+			/* take a punch out of the middle of the original rear bearing
+			 difference to eventually form the scaffolding required to support
+			 the shoulder to constrain the rear bering outer race. */		
+			difference()
+			{
+				translate([0,0,-1])
+				b608(h=9);
+
+				translate([0,0,-1])
+				scale([0.75,0.75,1])
+				b608(h=9);
+			}
+			/* Clear the rear bearing inner race, I'm drilling in rather than
+			 movig the bearing out to preserve the compatability of your
+			 existing hobbed bolt regardless of how you align it. */
+           translate([0,0,-0.5])
+			scale([0.67,0.67,1])
 			b608(h=9);
 		
 			translate([0,0,20])
 			b608(h=9);
+			/* clearance for front bearing inner race */
+			translate([0,0,20-0.5])
+			scale([0.67,0.67,1])
+           b608(h=9);
 		
 			translate([-13,0,9.5])
 			b608(h=wade_block_depth);
-		
-			translate([0,0,8+layer_height])
+
+			/* The 8.5 here restores the bridge scaffold removed by the
+            rear bearing inner race clearance drilling into the block. */
+			translate([0,0,8.5+layer_height])
 			cylinder(r=m8_clearance_hole/2,h=wade_block_depth-(8+layer_height)+2);	
 
 			// Filament feed.
