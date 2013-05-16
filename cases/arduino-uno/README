@@ -1,0 +1,5 @@
+Derivative of Arduino Uno R3 Base http://www.thingiverse.com/thing:81375
+with a slightly thinner base.
+
+Slice with "--solid-infill-below-area 4000" to avoid wasting time with
+fancy fill below the small raised areas.
