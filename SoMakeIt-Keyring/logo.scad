@@ -13,6 +13,10 @@ corner_radius = 6;
 hole_radius = 2;
 $fn = 30;
 
+somakeit_logo(thickness, size, corner_radius, hole_radius, 30);
+
+module somakeit_logo(thickness, size, corner_radius, hole_radius, $fn) {
+
 difference() {
 
   // simple rounded square
@@ -52,3 +56,6 @@ difference() {
              size-hole_radius-(corner_radius/2), 0])
     cylinder(r = hole_radius, h = thickness+2, center = true);
 }
+
+}  // module somakeit_logo
+
