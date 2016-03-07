@@ -17,34 +17,50 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // *************************************************************************
 
+use <MCAD/polyholes.scad>;
+
 // Box configuration
-box_external_length    = 150;    // mm
-box_external_width     = 100;    // mm
-box_external_height    =  45;    // mm
-wall_thickness         =   7;    // mm
+wall_thickness         =   4;    // mm
+box_external_length   = 110 + wall_thickness;    // mm
+box_external_width    =  55 + wall_thickness;    // mm
+box_external_height   =  35 + 2 * wall_thickness;    // mm
 lid_tolerance          =   0.5;  // mm
 
 // PCB mount configuration
-pcb_mount_pitch_length = 100;    // mm 
-pcb_mount_pitch_width  =  70;    // mm
+pcb_mount_pitch_length =  60;    // mm 
+pcb_mount_pitch_width  =  30;    // mm
 pcb_mount_radius       =   1.5;  // mm
 pcb_mount_height       =   4;    // mm
-pcb_mount_origin       = [2.0 * wall_thickness, 2.0 * wall_thickness]; // mm
-pcb_mount_auto_centre  = true;
+pcb_mount_origin       = [(box_external_length - pcb_mount_pitch_length) - wall_thickness * 2.0, (box_external_width - pcb_mount_pitch_width) / 2.0]; // mm
+pcb_mount_auto_centre  = false;
+
+// Mains socket?
+mains_socket = true;
+mains_socket_width = 28.5;  // mm
+mains_socket_height = 20.5;  // mm
+mains_socket_mount_pitch = 40.0; //mm
+mains_socket_mount_d = 4.0;  //mm
+
+// grommet?
+grommet = true;
+grommet_type = "rectangular";
+grommet_width =  9.25;  // mm
+grommet_height =  6.25;  // mm
+
 
 // Style configuration
 corner_style    = "rounded";  // only style currently available
 rounding_radius = wall_thickness;
 cylinder_faces  = 30;
 
-add_logo           = true;
+logo           = true;
 // Logo configuration
 logo_thickness     =  2.5;
 logo_size          = 30;
 logo_corner_radius =  6;
 logo_hole_radius   =  2;
 logo_fn            = 30;
-logo_origin        = [ 30, 30 ]; //mm
+logo_origin        = [ 30, 20 ]; //mm
 
 // Compute the expensive, albeit elegant Minkowski Sum 
 // to generate the rounded box corners
@@ -56,13 +72,20 @@ union() {
     
     // The PCB mounts
     if (pcb_mount_auto_centre) {
-        
-    }
-    translate (pcb_mount_origin) { 
-        pcb_mount(pcb_mount_pitch_length,
-                    pcb_mount_pitch_width,
-                    pcb_mount_radius,
-                    pcb_mount_height);
+        pcb_mount_origin = [ (box_external_length - pcb_mount_pitch_length) / 2.0, (box_external_width - pcb_mount_pitch_width) / 2.0];
+         translate (pcb_mount_origin) { 
+            pcb_mount(pcb_mount_pitch_length,
+                        pcb_mount_pitch_width,
+                        pcb_mount_radius,
+                        pcb_mount_height);
+         }
+    } else {
+        translate (pcb_mount_origin) { 
+            pcb_mount(pcb_mount_pitch_length,
+                        pcb_mount_pitch_width,
+                        pcb_mount_radius,
+                        pcb_mount_height);
+        }
     }
                 
     // The lid
@@ -83,7 +106,7 @@ union() {
                     wall_thickness, rounding_radius);
         }
         
-        if (add_logo == true) {
+        if (logo == true) {
             translate ([logo_origin[0], logo_origin[1], box_external_height]) {
                 somakeit_logo(logo_thickness, logo_size,
                                 logo_corner_radius, logo_hole_radius,
@@ -105,6 +128,24 @@ union() {
                         box_external_height - 2.0 * wall_thickness,
                         rounding_radius);
             }
+        // Mains socket cutout
+        if (mains_socket) {
+            union() {
+                translate([wall_thickness / 2.0 - 1.0, box_external_width / 2.0, box_external_height / 2.0]) {
+                    cube([wall_thickness + 2.0, mains_socket_width, mains_socket_height], center=true);
+                    translate ([-wall_thickness / 2.0 - 1.0, -mains_socket_mount_pitch / 2.0, 0]) rotate([0,90,0]) polyhole(d = mains_socket_mount_d, h = wall_thickness + 2.0);
+                    translate ([-wall_thickness / 2.0 - 1.0, mains_socket_mount_pitch / 2.0, 0]) rotate([0,90,0]) polyhole(d = mains_socket_mount_d, h = wall_thickness + 2.0);
+                }
+            }
+        }
+        
+        if (grommet) {
+            if (grommet_type == "rectangular") {
+                translate([box_external_length - wall_thickness / 2.0 + 1.0, box_external_width / 2.0, wall_thickness + 12.0]) {
+                    cube([wall_thickness + 2.0, grommet_width, grommet_height], center=true);
+                }
+            }
+        }
 
     }
 }
