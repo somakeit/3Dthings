@@ -32,16 +32,17 @@ pcb_mount_pitch_width  =  30;    // mm
 pcb_mount_radius       =   1.5;  // mm
 pcb_mount_height       =   4;    // mm
 pcb_mount_insert_depth =   4;    // mm
-pcb_mount_origin       = [(box_external_length - pcb_mount_pitch_length) - wall_thickness * 2.0 - 10.0, (box_external_width - pcb_mount_pitch_width) / 2.0]; // mm
+pcb_mount_origin       = [(box_external_length - pcb_mount_pitch_length) - wall_thickness * 2.0 - 20.0, (box_external_width - pcb_mount_pitch_width) / 2.0]; // mm
 pcb_mount_auto_centre  = false;
 
 // Lid mount configuration
 lid_mount_pitch_length =  box_external_length - wall_thickness * 2.0 - 20;   // mm
 lid_mount_pitch_width  =  box_external_width - wall_thickness * 2.0 - 10;   // mm
-lid_mount_radius       =   3.0;  // mm
+lid_mount_radius       =   3.25;  // mm
 lid_mount_height       =   box_external_height  - wall_thickness * 3.0;    // mm
 lid_mount_insert_depth =   9.7;    // mm
 lid_mount_origin       = [(box_external_length - lid_mount_pitch_length) / 2.0 + 5.0/* - (lid_mount_radius * 2.0 )*/, (box_external_width - lid_mount_pitch_width) / 2.0]; // mm
+lid_hole_countersink = false;
 lid_mount_auto_centre  = false;
 
 // Mains socket?
@@ -81,7 +82,7 @@ use <../../SoMakeIt-Keyring/logo.scad>
 union() {
                 
     // The lid
-    !difference() {
+    *difference() {
         union() {
             translate ([wall_thickness + lid_tolerance,
                         wall_thickness + lid_tolerance,
@@ -245,7 +246,9 @@ module screw_hole(radius, height) {
     cs_h = 2.0; // mm
 
     union() {
-        cylinder(r1 = radius, r2 = radius + cs_r, h = cs_h, center = true, $fn = cylinder_faces);
+        if (lid_hole_countersink == true) {
+            cylinder(r1 = radius, r2 = radius + cs_r, h = cs_h, center = true, $fn = cylinder_faces);
+        }
         cylinder(r = radius, h = height, center = true, $fn = cylinder_faces);
     }
 
