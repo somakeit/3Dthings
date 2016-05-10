@@ -20,43 +20,53 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 use <MCAD/polyholes.scad>;
 
 // Box configuration
+eps = 1.0;
 wall_thickness         =   2.0;    // mm
-box_external_length   = 110 + wall_thickness * 2.0;    // mm
-box_external_width    =  55 + wall_thickness * 2.0;    // mm
-box_external_height   =  30 + 2 * wall_thickness;    // mm
+box_external_length   = 81 + eps + wall_thickness * 2.0;    // mm
+box_external_width    = 50 + eps + wall_thickness * 2.0;    // mm
+box_external_height   =  5.0 + 2 * wall_thickness;    // mm
 lid_tolerance          =   0.5;  // mm
 
 // PCB mount configuration
-pcb_mount_pitch_length =  60;    // mm 
-pcb_mount_pitch_width  =  30;    // mm
+// If pcb_mount_pos_vector set to describe mount positions then use this, if not set then rectangular with length pcb_mount_pitch_length and width pcb_mount_pitch_width
+pcb_mount_pitch_length =  74.0;    // mm 
+pcb_mount_pitch_width  =  43.0;    // mm
+pcb_mount_pos_vec      = [[0,0],[0,43.0],[74.0, 35.0],[74.0, 0]];
 pcb_mount_radius       =   1.5;  // mm
-pcb_mount_height       =   4;    // mm
+pcb_mount_height       =   4.0;    // mm
 pcb_mount_insert_depth =   4;    // mm
-pcb_mount_origin       = [(box_external_length - pcb_mount_pitch_length) - wall_thickness * 2.0 - 20.0, (box_external_width - pcb_mount_pitch_width) / 2.0]; // mm
-pcb_mount_auto_centre  = false;
+pcb_mount_origin       = [(box_external_length - pcb_mount_pitch_length) - wall_thickness * 2.0, (box_external_width - pcb_mount_pitch_width) / 2.0]; // mm
+pcb_mount_auto_centre  = true;
 
 // Lid mount configuration
-lid_mount_pitch_length =  box_external_length - wall_thickness * 2.0 - 20;   // mm
+lid_mount = false;
+lid_mount_pitch_length =  box_external_length - wall_thickness * 2.0 - 10;   // mm
 lid_mount_pitch_width  =  box_external_width - wall_thickness * 2.0 - 10;   // mm
-lid_mount_radius       =   3.25;  // mm
+lid_mount_radius       =   1.5;  // mm
 lid_mount_height       =   box_external_height  - wall_thickness * 3.0;    // mm
 lid_mount_insert_depth =   9.7;    // mm
 lid_mount_origin       = [(box_external_length - lid_mount_pitch_length) / 2.0 + 5.0/* - (lid_mount_radius * 2.0 )*/, (box_external_width - lid_mount_pitch_width) / 2.0]; // mm
 lid_hole_countersink = false;
-lid_mount_auto_centre  = false;
+lid_mount_auto_centre  = true;
 
 // Mains socket?
-mains_socket = true;
+mains_socket = false;
 mains_socket_width = 28.5;  // mm
 mains_socket_height = 20.5;  // mm
 mains_socket_mount_pitch = 40.0; //mm
 mains_socket_mount_d = 4.0;  //mm
 
 // grommet?
-grommet = true;
+grommet = false;
 grommet_type = "rectangular";
 grommet_width =  8.25;  // mm
 grommet_height =  5.25;  // mm
+
+// Screw holes throught the base ?
+base_mount_holes = true;
+base_mount_holes_pos_vec = [[0, 0], [25.4, 0]];
+base_mount_holes_origin = [(box_external_length - 25.4) / 2.0/* - (lid_mount_radius * 2.0 )*/, (box_external_width - 0) / 2.0]; // mm;
+base_mount_holes_radius  = 2.6;
 
 
 // Style configuration
@@ -64,7 +74,7 @@ corner_style    = "rounded";  // only style currently available
 rounding_radius = wall_thickness;
 cylinder_faces  = 30;
 
-logo           = true;
+logo           = false;
 // Logo configuration
 logo_thickness     =  2.5;
 logo_size          = 30;
@@ -82,7 +92,7 @@ use <../../SoMakeIt-Keyring/logo.scad>
 union() {
                 
     // The lid
-    *difference() {
+    %difference() {
         union() {
             translate ([wall_thickness + lid_tolerance,
                         wall_thickness + lid_tolerance,
@@ -109,11 +119,15 @@ union() {
             }
         }
         // The lid screw holes and countersinks
-        translate([0, 0, box_external_height - 2.0 * wall_thickness]) translate (lid_mount_origin) { 
-            screw_holes(lid_mount_pitch_length,
-                          lid_mount_pitch_width,
-                          lid_mount_radius,
-                          wall_thickness);
+        if (lid_mount == true) {
+            translate([0, 0, box_external_height - 1.0 * wall_thickness]) translate (lid_mount_origin) { 
+                screw_holes(lid_mount_pitch_length,
+                              lid_mount_pitch_width,
+                              "undef",    // TODO: sort this horrible hack out by naming arguments
+                              lid_mount_radius,
+                              wall_thickness,
+                              lid_hole_countersink);
+            }
         }
         
         translate ([wall_thickness * 2.0 + lid_tolerance,
@@ -159,14 +173,27 @@ union() {
                 }
             }
         }
+        
+        // Base mount holes
+        if (base_mount_holes)  {
+            translate (base_mount_holes_origin) { 
+                    screw_holes(pcb_mount_pitch_length,
+                                pcb_mount_pitch_width,
+                                base_mount_holes_pos_vec,
+                                base_mount_holes_radius,
+                                wall_thickness,
+                                false);
+            }
+        }
 
     }
      // The PCB mounts
-    if (pcb_mount_auto_centre) {
+     if (pcb_mount_auto_centre) {
         pcb_mount_origin = [ (box_external_length - pcb_mount_pitch_length) / 2.0, (box_external_width - pcb_mount_pitch_width) / 2.0];
          translate (pcb_mount_origin) { 
             screw_mount(pcb_mount_pitch_length,
                         pcb_mount_pitch_width,
+                        pcb_mount_pos_vec,
                         pcb_mount_radius,
                         pcb_mount_height,
                         pcb_mount_insert_depth);
@@ -175,6 +202,7 @@ union() {
         translate (pcb_mount_origin) { 
             screw_mount(pcb_mount_pitch_length,
                         pcb_mount_pitch_width,
+                        pcb_mount_pos_vec,
                         pcb_mount_radius,
                         pcb_mount_height,
                         pcb_mount_insert_depth);
@@ -182,22 +210,24 @@ union() {
     }
     
     // The lid screw mounts
-    if (lid_mount_auto_centre) {
-        lid_mount_origin = [ (box_external_length - lid_mount_pitch_length) / 2.0, (box_external_width - lid_mount_pitch_width) / 2.0];
-        translate (lid_mount_origin) { 
-            screw_mount(lid_mount_pitch_length,
-                          lid_mount_pitch_width,
-                          lid_mount_radius,
-                          lid_mount_height,
-                          lid_mount_insert_depth);
-         }
-    } else {
-        translate (lid_mount_origin) { 
-            screw_mount(lid_mount_pitch_length,
-                          lid_mount_pitch_width,
-                          lid_mount_radius,
-                          lid_mount_height,
-                          lid_mount_insert_depth);
+    if (lid_mount == true) {
+        if (lid_mount_auto_centre) {
+            lid_mount_origin = [ (box_external_length - lid_mount_pitch_length) / 2.0, (box_external_width - lid_mount_pitch_width) / 2.0];
+            translate (lid_mount_origin) { 
+                screw_mount(lid_mount_pitch_length,
+                              lid_mount_pitch_width,
+                              lid_mount_radius,
+                              lid_mount_height,
+                              lid_mount_insert_depth);
+             }
+        } else {
+            translate (lid_mount_origin) { 
+                screw_mount(lid_mount_pitch_length,
+                              lid_mount_pitch_width,
+                              lid_mount_radius,
+                              lid_mount_height,
+                              lid_mount_insert_depth);
+            }
         }
     }
 }
@@ -229,6 +259,7 @@ module rounded_box(length, width, height, r) {
 
 }
 
+// TODO: convert to polyhole()
 module mount_hole(radius, height, insert_depth) {
 
     width = 2.0; // mm
@@ -240,13 +271,14 @@ module mount_hole(radius, height, insert_depth) {
 
 }
 
-module screw_hole(radius, height) {
+// TODO: convert to polyhole()
+module screw_hole(radius, height, cs) {
 
     cs_r = 2.0; // mm
     cs_h = 2.0; // mm
 
     union() {
-        if (lid_hole_countersink == true) {
+        if (cs == true) {
             cylinder(r1 = radius, r2 = radius + cs_r, h = cs_h, center = true, $fn = cylinder_faces);
         }
         cylinder(r = radius, h = height, center = true, $fn = cylinder_faces);
@@ -254,13 +286,23 @@ module screw_hole(radius, height) {
 
 }
 
-module screw_mount(pitch_length, pitch_width, radius, height, insert_depth) {
+module screw_mount(pitch_length, pitch_width, pos_vec = "undef", radius, height, insert_depth) {
  
     translate([0, 0, height / 2.0 + wall_thickness]) {
-        union() {
-            for (i = [0:1]) {
-                for (j = [0:1]) {
-                    translate([j * pitch_length, i * pitch_width, 0]) {
+        union () {
+            if (pos_vec == "undef") {
+                
+                    for (i = [0:1]) {
+                        for (j = [0:1]) {
+                            translate([j * pitch_length, i * pitch_width, 0]) {
+                                mount_hole(radius, height, insert_depth);
+                            }
+                        }
+                    }
+               
+            } else {
+                for (i = pos_vec) {
+                    translate([i[0], i[1], 0]) {
                         mount_hole(radius, height, insert_depth);
                     }
                 }
@@ -270,14 +312,22 @@ module screw_mount(pitch_length, pitch_width, radius, height, insert_depth) {
     
 }
 
-module screw_holes(pitch_length, pitch_width, radius, height) {
+module screw_holes(pitch_length, pitch_width, pos_vec = "undef", radius, height, cs = false) {
  
-    translate([0, 0, height / 2.0 + wall_thickness]) {
+    translate([0, 0, height / 2.0]) {
         union() {
-            for (i = [0:1]) {
-                for (j = [0:1]) {
-                    translate([j * pitch_length, i * pitch_width, 0]) {
-                        screw_hole(radius, height);
+            if (pos_vec == "undef") {
+                for (i = [0:1]) {
+                    for (j = [0:1]) {
+                        translate([j * pitch_length, i * pitch_width, 0]) {
+                            screw_hole(radius, height, cs);
+                        }
+                    }
+                }
+            } else {
+                for (i = pos_vec) {
+                    translate([i[0], i[1], 0]) {
+                        screw_hole(radius, height, cs);
                     }
                 }
             }
