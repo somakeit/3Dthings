@@ -6,8 +6,8 @@
 import svgwrite
 from svgwrite import mm
 
-WINDOW_WIDTH  = 250.0  # mm
-WINDOW_HEIGHT = 400.0  # mm
+WINDOW_WIDTH  = 12 * 25.4  # mm
+WINDOW_HEIGHT = 18 * 25.4  # mm
 
 CUTOUT_RADIUS = 75.0 + 1.0  # mm
 CUTOUT_AUTO_CENTRE = True
