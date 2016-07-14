@@ -2,6 +2,7 @@
 
 # This one for now:  http://www.wickes.co.uk/Wickes-External-Wall-Grille-150mm/p/199815
 # Maybe try this too: http://www.wickes.co.uk/Wickes-Hit+Miss-Vent-225-x-225mm/p/713014
+# Even better: http://www.fantronix.com/acatalog/6--150mm--Cowled-Vent-Wind-Baffle-Grille.html
 
 import svgwrite
 from svgwrite import mm
