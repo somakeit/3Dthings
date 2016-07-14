@@ -36,7 +36,10 @@ pcb_mount_radius       =   1.5;  // mm
 pcb_mount_height       =   4.0;    // mm
 pcb_mount_insert_depth =   4;    // mm
 pcb_mount_origin       = [(box_external_length - pcb_mount_pitch_length) - wall_thickness * 2.0, (box_external_width - pcb_mount_pitch_width) / 2.0]; // mm
+pcb_mount_captive_nut_recess_radius = pcb_mount_radius * 2.0;
+pcb_mount_captive_nut_recess_depth = 2.40 + 0.5;  // M3 nut plus 0.25mm fudge factor (each end)
 pcb_mount_auto_centre  = true;
+pcb_mount_captive_nut  = true;
 
 // Lid mount configuration
 lid_mount = false;
@@ -90,7 +93,7 @@ use_minkowski = false;
 use <../../SoMakeIt-Keyring/logo.scad>
 
 union() {
-                
+           //!cylinder(r = 3.0 / cos(180 / 6), h = 3, $fn = 6);     
     // The lid
     %difference() {
         union() {
@@ -182,10 +185,35 @@ union() {
                                 base_mount_holes_pos_vec,
                                 base_mount_holes_radius,
                                 wall_thickness,
-                                false);
+                                true);
             }
         }
+        
+               // PCB mount nut recesses
+        if (pcb_mount_captive_nut) {
+            if (pcb_mount_auto_centre) {
+                pcb_mount_origin = [ (box_external_length - pcb_mount_pitch_length) / 2.0, (                box_external_width - pcb_mount_pitch_width) / 2.0];
 
+                translate (pcb_mount_origin) translate([0,0,pcb_mount_captive_nut_recess_depth / 2.0]) { 
+                    captive_nut_recess(pcb_mount_pitch_length,
+                                        pcb_mount_pitch_width,
+                                        pcb_mount_pos_vec,
+                                        pcb_mount_captive_nut_recess_radius,
+                                        pcb_mount_captive_nut_recess_depth + 1.0);
+                }
+            } else {
+                translate (pcb_mount_origin) translate([0,0,pcb_mount_captive_nut_recess_depth / 2.0]) { 
+                    captive_nut_recess(pcb_mount_pitch_length,
+                                        pcb_mount_pitch_width,
+                                        pcb_mount_pos_vec,
+                                        pcb_mount_captive_nut_recess_radius,
+                                        pcb_mount_captive_nut_recess_depth + 1.0);
+                
+                }
+            }
+          
+        }
+        
     }
      // The PCB mounts
      if (pcb_mount_auto_centre) {
@@ -267,6 +295,7 @@ module mount_hole(radius, height, insert_depth) {
     difference() {
         cylinder(r = radius + width, h = height, center = true, $fn = cylinder_faces);
         translate([0, 0, (height - insert_depth) / 2.0]) cylinder(r = radius, h = insert_depth, center = true, $fn = cylinder_faces);
+        
     }
 
 }
@@ -310,6 +339,32 @@ module screw_mount(pitch_length, pitch_width, pos_vec = "undef", radius, height,
         }
     }
     
+}
+
+module captive_nut_recess(pitch_length, pitch_width, pos_vec = "undef", radius, height) {
+ 
+    n = 6;
+    
+        union () {
+            if (pos_vec == "undef") {
+                
+                    for (i = [0:1]) {
+                        for (j = [0:1]) {
+                            translate([j * pitch_length, i * pitch_width, 0]) {
+                                cylinder(r = radius / cos(180 / n), h = height, $fn = n, center = true);
+                            }
+                        }
+                    }
+               
+            } else {
+                for (i = pos_vec) {
+                    translate([i[0], i[1], 0]) {
+                        cylinder(r = radius / cos(180 / n), h = height, $fn = n, center = true);
+                    }
+                }
+            }
+        }
+  
 }
 
 module screw_holes(pitch_length, pitch_width, pos_vec = "undef", radius, height, cs = false) {
