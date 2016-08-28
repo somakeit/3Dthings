@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # @(#)stltosvg.py
@@ -38,6 +39,7 @@ Example:
 import argparse
 import subprocess
 import os.path
+import sys
 
 from lxml import etree
 
@@ -63,20 +65,14 @@ def main():
 
     path, filename = os.path.split(args.inputfile[0])
     filenameroot, _ = os.path.splitext(filename)
-
-    print(path, filename)
     
-    OUTPUT_FILENAME_FORMAT = ''.join(['[input_filename_base].',
-                                      INTERMEDIATE_FILE_SUFFIX, '.',
-                                      FILETYPE_SUFFIX])
+    OUTPUT_FILENAME_FORMAT = '[input_filename_base].' \
+                             + INTERMEDIATE_FILE_SUFFIX + '.' + FILETYPE_SUFFIX
 
     # The following is a bit dokey but necessary
-    SVG_FILENAME_SLICED = os.path.join(path,
-                                       ''.join([filenameroot,
-                                                '.',
-                                                INTERMEDIATE_FILE_SUFFIX,
-                                                '.',
-                                                FILETYPE_SUFFIX]))
+    SVG_FILENAME_SLICED = os.path.join(path, filenameroot               \
+                                       + '.' + INTERMEDIATE_FILE_SUFFIX \
+                                       + '.' + FILETYPE_SUFFIX)
     
     try:
         completed = subprocess.run(['slic3r', '--output-filename-format',
@@ -88,9 +84,9 @@ def main():
         sys.exit(1)
     
     try:
-        with open(SLICED_SVG_FILENAME) as fp:
+        with open(SVG_FILENAME_SLICED) as fp:
             all_layers_tree = etree.parse(fp)
-            root_svg = all_layers_tree.getroot()
+            all_layers_svg = all_layers_tree.getroot()
             layers = all_layers_tree.xpath('/svg:svg/svg:g',
                                            namespaces=XML_NAMESPACE_SVG)
             
@@ -99,30 +95,30 @@ def main():
                 layer_id = layer_group.attrib['id']
                 print('Processing: ', layer_id)
 
-                layer_tree = etree.ElementTree()
-                layer_tree.docinfo = all_layers_tree.docinfo
+                #layer_tree.docinfo = all_layers_tree.docinfo
+                #etree.register_namespace('xi', 'http://www.w3.org/2001/XInclude')
 
-                svg_element = layer_tree.makeelement('svg')
-                svg_element.attrib = root_svg.attrib
-                width = int(svg_element.attrib['width'])
-                height = int(svg_element.attrib['height'])
-                svg_element.attrib['width'].append('mm')
-                svg_element.attrib['height'].append('mm')
+                svg_element = etree.Element('svg')
 
-                svg_element.set('viewBox', ''.join(['0 0 ', width, ' ',
-                                                    height]))
+                for attrib_key, attrib_value in all_layers_svg.items():
+                    svg_element.set(attrib_key, attrib_value)
+                
+                width = float(svg_element.attrib['width'])
+                height = float(svg_element.attrib['height'])
+                svg_element.attrib['width'] += 'mm'
+                svg_element.attrib['height'] += 'mm'
+
+                svg_element.set('viewBox', '0 0 ' + str(width) + ' ' \
+                                + str(height))
 
                 svg_element.append(layer_group)
-                layer_tree.append(svg_element)
+                layer_tree = etree.ElementTree(svg_element)
                 #create filename for individual layer file:
-                SVG_FILENAME_LAYER = os.path.join(path,
-                                                  ''.join([filenameroot,
-                                                           '.',
-                                                           layer_id,
-                                                           '.',
-                                                           FILETYPE_SUFFIX]))
+                SVG_FILENAME_LAYER = os.path.join(path, filenameroot        \
+                                                  + '.' + layer_id          \
+                                                  + '.' + FILETYPE_SUFFIX)
     
-                with open(SVG_FILENAME_LAYER) as lf:
+                with open(SVG_FILENAME_LAYER, 'wb') as lf:
                     layer_tree.write(lf)
 
                 
