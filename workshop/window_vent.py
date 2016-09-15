@@ -29,7 +29,8 @@ def window_vent(name):
         centre_x = CUTOUT_CENTRE_X
         centre_y = CUTOUT_CENTRE_Y
     
-    dwg.add(dwg.rect((MARGIN * mm, MARGIN * mm), ((MARGIN + WINDOW_WIDTH) * mm, (MARGIN + WINDOW_HEIGHT) * mm),
+    dwg.add(dwg.rect((MARGIN * mm, MARGIN * mm),
+                     (WINDOW_WIDTH * mm, WINDOW_HEIGHT * mm),
                      fill='none', stroke='black',
                      stroke_width = STROKE_WIDTH * mm))
 
